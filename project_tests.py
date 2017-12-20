@@ -15,7 +15,6 @@ def test_safe(func):
     def func_wrapper(*args):
         with tf.Graph().as_default():
             result = func(*args)
-        print('Tests Passed')
         return result
 
     return func_wrapper
@@ -58,7 +57,7 @@ class TmpMock(object):
 @test_safe
 def test_load_vgg(load_vgg, tf_module):
     with TmpMock(tf_module.saved_model.loader, 'load') as mock_load_model:
-        vgg_path = '/home/ara/CarND/T3_P2_SS/vgg'
+        vgg_path = ''
         sess = tf.Session()
         test_input_image = tf.placeholder(tf.float32, name='image_input')
         test_keep_prob = tf.placeholder(tf.float32, name='keep_prob')

@@ -1,3 +1,8 @@
+
+# coding: utf-8
+
+# In[1]:
+
 import os.path
 import tensorflow as tf
 import helper
@@ -6,9 +11,14 @@ from distutils.version import LooseVersion
 import project_tests as tests
 
 
+# In[2]:
+
 # Check TensorFlow Version
 assert LooseVersion(tf.__version__) >= LooseVersion('1.0'), 'Please use TensorFlow version 1.0 or newer.  You are using {}'.format(tf.__version__)
 print('TensorFlow Version: {}'.format(tf.__version__))
+
+
+# In[3]:
 
 # Check for a GPU
 if not tf.test.gpu_device_name():
@@ -17,6 +27,8 @@ else:
     print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
 
 
+# In[4]:
+
 def load_vgg(sess, vgg_path):
     """
     Load Pretrained VGG Model into TensorFlow.
@@ -24,13 +36,14 @@ def load_vgg(sess, vgg_path):
     :param vgg_path: Path to vgg folder, containing "variables/" and "saved_model.pb"
     :return: Tuple of Tensors from VGG model (image_input, keep_prob, layer3_out, layer4_out, layer7_out)
     """
-    # (1) TODO: load VGG
+
     vgg_tag = 'vgg16'
     vgg_input_tensor_name = 'image_input:0'
     vgg_keep_prob_tensor_name = 'keep_prob:0'
     vgg_layer3_out_tensor_name = 'layer3_out:0'
     vgg_layer4_out_tensor_name = 'layer4_out:0'
     vgg_layer7_out_tensor_name = 'layer7_out:0'
+    tf.saved_model.loader.load(sess,[vgg_tag], vgg_path)
     graph = tf.get_default_graph()
     w0   = graph.get_tensor_by_name(vgg_input_tensor_name)
     keep = graph.get_tensor_by_name(vgg_keep_prob_tensor_name)
@@ -39,8 +52,14 @@ def load_vgg(sess, vgg_path):
     w7   = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
     return w0, keep, w3, w4, w7
 
+
+# In[5]:
+
 # test if load_vgg working properly
 tests.test_load_vgg(load_vgg,  tf)
+
+
+# In[6]:
 
 def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
@@ -52,30 +71,29 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
 
-    print("3 = ", vgg_layer3_out.shape)
-    print("4 = ", vgg_layer4_out.shape)
-    print("7 = ", vgg_layer7_out.shape)
-
-    # (2) TODO: add layers to VGG
-    conv_1x1 = tf.layers.conv2d(vgg_layer7_out,num_classes, 1, padding='same',
+    conv7_1x1 = tf.layers.conv2d(vgg_layer7_out,num_classes, 1, padding='same', kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
+    conv4_1x1 =  tf.layers.conv2d(vgg_layer4_out,num_classes, 1, padding='same', kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
+    conv3_1x1 =  tf.layers.conv2d(vgg_layer3_out,num_classes, 1, padding='same', kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
+    
+    output1  = tf.layers.conv2d_transpose(conv7_1x1, num_classes, 4, 2, padding='same',
                                 kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
-    print("conv_11 = ",conv_1x1.shape)
-    output1  = tf.layers.conv2d_transpose(conv_1x1, num_classes, 4, 2, padding='same',
-                                kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
-    print("output1 = ", output1.shape)
-    #sum1  = tf.add(output1,vgg_layer4_out)
-    output3 = tf.layers.conv2d_transpose(output1, num_classes, 4, 2, padding='same',
+   
+    sum1  = tf.add(output1,conv4_1x1)
+    output3 = tf.layers.conv2d_transpose(sum1, num_classes, 4, 2, padding='same',
                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-    # sum2  = tf.add(output3, vgg_layer3_out)
-    output4 = tf.layers.conv2d_transpose(output3, num_classes, 16, 8, padding='same',
+    sum2  = tf.add(output3, conv3_1x1)
+    output4 = tf.layers.conv2d_transpose(sum2, num_classes, 16, 8, padding='same',
                                          kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
-
-
     return output4
+
+
+# In[7]:
 
 # test if test_layers is working properly
 tests.test_layers(layers)
 
+
+# In[8]:
 
 def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     """
@@ -88,11 +106,18 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     """
     # TODO: Implement function
     logits = tf.reshape(nn_last_layer, (-1, num_classes))
-    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, correct_label))
+    correct_label = tf.reshape(correct_label, (-1,num_classes))
+    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=correct_label))
     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy_loss)
     return logits, optimizer, cross_entropy_loss
+
+
+# In[9]:
+
 tests.test_optimize(optimize)
 
+
+# In[10]:
 
 def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
              correct_label, keep_prob, learning_rate):
@@ -109,10 +134,23 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
-    # TODO: Implement function
+
+    sess.run(tf.global_variables_initializer())
+    for i in range(epochs):
+        print("\n epoch =",i, ": losses are ",end='')
+        for image, label in get_batches_fn(batch_size):
+            _, loss = sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image, correct_label: label,keep_prob: 0.5, learning_rate: 0.001})
+            print("{:.3f}, ".format(loss),end='')
+        print()
     pass
+
+
+# In[11]:
+
 tests.test_train_nn(train_nn)
 
+
+# In[12]:
 
 def run():
     num_classes = 2
@@ -134,20 +172,25 @@ def run():
         # Create function to get batches
         get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
 
-        # OPTIONAL: Augment Images for better results
-        #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
+        epochs     = 60
+        batch_size = 20
+        correct_label = tf.placeholder(tf.int32, [None, None, None, num_classes], name='correct_label')
+        learning_rate = tf.placeholder(tf.float32, name='learning_rate')
 
-        # TODO: Build NN using load_vgg, layers, and optimize function
-        input_image, keep_prob, layer3_out, layer4_out, layer7_out  = load_vgg(sess,vgg_path)
-        layer_output = layers(layer3_out,layer4_out,layer7_out, num_classes)
+        input_image, keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
 
-        # TODO: Train NN using the train_nn function
+        nn_last_layer = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
 
-        # TODO: Save inference data using helper.save_inference_samples
-        #  helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
+        logits, train_op, cross_entropy_loss = optimize(nn_last_layer, correct_label, learning_rate, num_classes)
 
-        # OPTIONAL: Apply the trained model to a video
+        train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
+                 correct_label, keep_prob, learning_rate)
+
+        #Save inference data using helper.save_inference_samples
+        helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
 
+# In[13]:
 if __name__ == '__main__':
     run()
+
