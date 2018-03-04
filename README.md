@@ -2,6 +2,8 @@
 ### Introduction
 In this project, the pixels of a road in images are labeled using a Fully Convolutional Network (FCN).
 
+Requirements for this project are listed in [the rubric](https://review.udacity.com/#!/rubrics/989/view).
+
 ### Setup
 ##### Frameworks and Packages
 The following tools and envirnoments are used:
@@ -17,12 +19,3 @@ Run the following command to run the project:
 ```
 python main.py
 ```
-**Note** If running this in Jupyter Notebook system messages, such as those regarding test status, may appear in the terminal rather than the notebook.
-
-### Submission
-2. Requirements are at [the rubric](https://review.udacity.com/#!/rubrics/989/view).
-3. Pyhton files:
- - `helper.py`
- - `main.py`
- - `project_tests.py`
- - Newest inference images from `runs` folder  (**all images from the most recent run**)
