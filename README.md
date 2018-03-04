@@ -5,8 +5,7 @@ In this project, the pixels of a road in images are labeled using a Fully Convol
 Requirements for this project are listed in [the rubric](https://review.udacity.com/#!/rubrics/989/view).
 
 ### Setup
-##### Frameworks and Packages
-The following tools and envirnoments are used:
+The following freameworks and packages are used:
  - [Python 3](https://www.python.org/)
  - [TensorFlow](https://www.tensorflow.org/)
  - [NumPy](http://www.numpy.org/)
